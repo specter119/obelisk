@@ -15,6 +15,7 @@ import { createContext, runInNewContext } from 'node:vm';
 
 import { DB_PATH, openAttuneDb, openReadDb, probeAttuneMemoryLayer } from './db.ts';
 import { buildIndex, ensureReadableSchema } from './indexer.ts';
+import { resolveObeliskPaths } from './paths.ts';
 import { coreSchemaNeedsMigration } from './schema-migrations.ts';
 import {
   createConfiguredBuiltinProviderRuntime,
@@ -26,7 +27,7 @@ import type { SqliteDb } from './sqlite-types.ts';
 import { nodeSqliteTransactionAdapter } from './tx.ts';
 import { runRetryableWriteTransaction } from './write-coordinator.ts';
 
-export { buildIndex, DB_PATH };
+export { buildIndex, DB_PATH, resolveObeliskPaths };
 
 type SandboxApi = Record<string, unknown>;
 

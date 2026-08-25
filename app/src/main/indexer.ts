@@ -29,12 +29,12 @@ import { runRetryableWriteTransaction, isBeginBusyFailure, hasUnusableTransactio
 import {
   inferProjectPath,
 } from '../../../packages/core/src/parsing.ts';
+import { resolveObeliskPaths } from '../../../packages/core/src/paths.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const DEFAULT_CLAUDE_DIR = path.join(os.homedir(), '.claude');
-const DEFAULT_OBELISK_DIR = path.join(os.homedir(), '.obelisk');
-const DEFAULT_DB_PATH = path.join(DEFAULT_OBELISK_DIR, 'obelisk.sqlite');
+const DEFAULT_DB_PATH = resolveObeliskPaths().dbPath;
 
 function resolveSchemaPath() {
   const candidates = [
