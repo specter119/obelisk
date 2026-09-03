@@ -29,7 +29,7 @@ function esmResolve(specifier) {
 
 const ELECTRON_URL = esmResolve('electron');
 const DATABASE_URL = esmResolve('better-sqlite3');
-const CHOKIDAR_URL = esmResolve('chokidar');
+const ADAPTIVE_WATCHER_URL = new URL('../packages/adaptive-watcher/src/index.ts', import.meta.url).href;
 const INDEXER_URL = new URL('./indexer.ts', mainUrl).href;
 const INDEXER_SERVICE_URL = new URL('./indexer-service.ts', mainUrl).href;
 const INDEXER_WORKER_URL = new URL('./indexer-worker-client.ts', mainUrl).href;
@@ -137,11 +137,9 @@ test('Electron main uses custom config and data paths from the shared resolver',
       ipcHandlers.set(channel, handler);
     },
   };
-  const fakeChokidar = {
-    watch(path) {
-      watchPaths.push(path);
-      return { on() { return this; }, close() {} };
-    },
+  const fakeAdaptiveWatcher = ({ targets }) => {
+    for (const target of targets) watchPaths.push(target.path);
+    return { close() {} };
   };
 
   const restore = registerMocks([
@@ -153,7 +151,7 @@ test('Electron main uses custom config and data paths from the shared resolver',
       }),
     }],
     [DATABASE_URL, { defaultExport: FakeDatabase }],
-    [CHOKIDAR_URL, { defaultExport: fakeChokidar }],
+    [ADAPTIVE_WATCHER_URL, { namedExports: { createAdaptiveWatcher: fakeAdaptiveWatcher } }],
     [INDEXER_URL, { namedExports: { writeHeartbeat() {} } }],
     [INDEXER_SERVICE_URL, {
       namedExports: {
