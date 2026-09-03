@@ -124,7 +124,7 @@ export function createConfiguredBuiltinProviderRuntime(
           requiresExplicitRoot: true,
           rootResolutionReason: reason,
         },
-        watchTargets: () => [],
+        watchRoots: () => [],
         discover: (ctx) => {
           const indexed = ctx.indexedSessions?.()[0];
           if (indexed) {

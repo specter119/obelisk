@@ -63,8 +63,7 @@
       "out/**"
     ],
     "asarUnpack": [
-      "node_modules/better-sqlite3/**/*",
-      "node_modules/@parcel/watcher/**/*"
+      "node_modules/better-sqlite3/**/*"
     ],
     "extraResources": [
       {
@@ -74,8 +73,8 @@
     ]
   },
   "dependencies": {
-    "@parcel/watcher": "^2.6.0",
-    "better-sqlite3": "^13.0.2"
+    "better-sqlite3": "^13.0.2",
+    "chokidar": "^4.0.3"
   },
   "devDependencies": {
     "@tanstack/vue-virtual": "^3.13.32",

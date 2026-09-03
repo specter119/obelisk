@@ -10,7 +10,6 @@ import {
   indexProviderPlan,
   indexProviderPlanStrict,
   ProviderIndexFailure,
-  readRecentTranscriptHints,
   writeProviderIndexMarkers,
 } from './provider-indexing.ts';
 import { nodeSqliteTransactionAdapter } from './tx.ts';
@@ -288,7 +287,6 @@ function buildIndex({ force = false, ignoreRecentBuild = false, ignoreDaemonOwne
           inventoryIssues,
           skipped: 0,
           skippedFiles,
-          watchHints: readRecentTranscriptHints(db),
         };
       }
 
@@ -354,7 +352,6 @@ function buildIndex({ force = false, ignoreRecentBuild = false, ignoreDaemonOwne
         inventoryIssues,
         skipped: skippedFiles.length,
         skippedFiles,
-        watchHints: readRecentTranscriptHints(db),
       };
     } finally {
       db.close();

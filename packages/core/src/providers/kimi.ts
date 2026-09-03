@@ -682,10 +682,7 @@ export function createKimiProvider({ rootDir = defaultKimiRoot() }: { rootDir?: 
     descriptor: { id: name, name: 'Kimi Code', vendor: 'Moonshot AI', defaultRoot: rootDir, color: '#6d6afc' },
     indexVersionMarker: KIMI_CANONICAL_TRANSCRIPT_MARKER,
     sessionUnitKey: ({ jsonlPath }) => sessionDirectoryFromWirePath(jsonlPath),
-    watchTargets: (configuredRoot) => [
-      { kind: 'tree', path: join(configuredRoot, 'sessions') },
-      { kind: 'file', path: join(configuredRoot, 'session_index.jsonl') },
-    ],
+    watchRoots: (configuredRoot) => [join(configuredRoot, 'sessions'), join(configuredRoot, 'session_index.jsonl')],
     discover(ctx: DiscoverContext): IndexUnit[] {
       const units: IndexUnit[] = [];
       const sessionsDir = join(rootDir, 'sessions');

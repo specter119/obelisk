@@ -37,21 +37,6 @@ function cursorToSkip(cursor: Cursor): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-// Cursor format: `${mtime}:${lines}:${size}:${ctimeMs}:${ino}`. The
-// mtime+ctime+size+inode signature (CONTRIBUTING: cursors must detect
-// same-millisecond rewrites) lets a same-mtime tail completion or a
-// same-mtime replacement back into discovery. Legacy `${mtime}:${lines}`
-// cursors keep the mtime-only gate and upgrade on the next parse.
-function cursorSignatureDiffers(cursor: string, filePath: string): boolean {
-  const stat = statSync(filePath);
-  const parts = cursor.split(':');
-  if (parts.length < 5) return Number(parts[0]) < stat.mtimeMs;
-  return Number(parts[0]) !== stat.mtimeMs
-    || Number(parts[2]) !== stat.size
-    || Number(parts[3]) !== stat.ctimeMs
-    || Number(parts[4]) !== stat.ino;
-}
-
 export const name = 'claude';
 export const CLAUDE_CANONICAL_TRANSCRIPT_MARKER = '__claude_canonical_transcript_v2__';
 
@@ -123,7 +108,7 @@ function discoverAt(rootDir: string, ctx: DiscoverContext): IndexUnit[] {
     return historyChanged
       || forcedPaths.has(normalizedPath)
       || cursor === null
-      || cursorSignatureDiffers(cursor, file.path);
+      || Number(cursor.split(':')[0]) < statSync(file.path).mtimeMs;
   }).map((f: any) => ({
     key: f.path,
     sessionId: f.sessionId,
@@ -277,8 +262,7 @@ export function* parse(unit: IndexUnit, cursor: Cursor): Generator<TranscriptRec
     return yield* parseWorkflow(unit);
   }
   const skip = cursorToSkip(cursor);
-  const stat = statSync(unit.key);
-  const mtime = stat.mtimeMs;
+  const mtime = statSync(unit.key).mtimeMs;
   const isSubagent = unit.isSubagent === true;
   const records: TranscriptRecord[] = [];
   const sm = {
@@ -296,18 +280,10 @@ export function* parse(unit: IndexUnit, cursor: Cursor): Generator<TranscriptRec
   };
 
   let lineNum = 0;
-  // Lines the cursor may safely skip on the next parse. A line only counts
-  // when it parsed, or when it is newline-terminated (mid-file garbage keeps
-  // the legacy count). An unterminated tail that fails to parse may still be
-  // growing — counting it would permanently skip the completed line.
-  let cursorLines = 0;
-  readLines(unit.key, (line: string, terminated: boolean) => {
+  readLines(unit.key, (line: string) => {
     lineNum++;
     let obj: any;
-    let parsed = true;
-    try { obj = JSON.parse(line); } catch { parsed = false; }
-    if (parsed || terminated) cursorLines = lineNum;
-    if (!parsed) return;
+    try { obj = JSON.parse(line); } catch { return; }
     const sid = unit.sessionId;
     const ts = obj.timestamp || null;
     const msg = obj.message || {};
@@ -416,7 +392,7 @@ export function* parse(unit: IndexUnit, cursor: Cursor): Generator<TranscriptRec
   }
 
   yield* records;
-  return `${mtime}:${cursorLines}:${stat.size}:${stat.ctimeMs}:${stat.ino}`;
+  return `${mtime}:${lineNum}`;
 }
 
 function rawClaude(input: RawLookup): RawRecord | null {
@@ -462,9 +438,9 @@ export function createClaudeProvider({ rootDir = join(homedir(), '.claude') }: {
     name,
     descriptor: { id: name, name: 'Claude Code', vendor: 'Anthropic', defaultRoot: rootDir, color: '#d97757' },
     indexVersionMarker: CLAUDE_CANONICAL_TRANSCRIPT_MARKER,
-    watchTargets: (configuredRoot) => [
-      { kind: 'tree', path: join(configuredRoot, 'projects') },
-      { kind: 'file', path: join(configuredRoot, 'history.jsonl') },
+    watchRoots: (configuredRoot) => [
+      join(configuredRoot, 'projects'),
+      join(configuredRoot, 'history.jsonl'),
     ],
     discover: (ctx) => discoverAt(rootDir, ctx),
     parse,
